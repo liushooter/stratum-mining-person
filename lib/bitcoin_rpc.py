@@ -12,7 +12,7 @@ import lib.logger
 log = lib.logger.get_logger('bitcoin_rpc')
 
 class BitcoinRPC(object):
-    
+
     def __init__(self, host, port, username, password):
         log.debug("Got to Bitcoin RPC")
         self.bitcoin_url = 'http://%s:%d' % (host, port)
@@ -22,7 +22,7 @@ class BitcoinRPC(object):
             'Authorization': 'Basic %s' % self.credentials,
         }
         client.HTTPClientFactory.noisy = False
-	self.has_submitblock = False        
+	self.has_submitblock = False
 
     def _call_raw(self, data):
         client.Headers
@@ -32,7 +32,7 @@ class BitcoinRPC(object):
             headers=self.headers,
             postdata=data,
         )
-           
+
     def _call(self, method, params):
         return self._call_raw(json.dumps({
                 'jsonrpc': '2.0',
@@ -40,7 +40,7 @@ class BitcoinRPC(object):
                 'params': params,
                 'id': '1',
             }))
-    
+
     @defer.inlineCallbacks
     def check_submitblock(self):
         try:
@@ -60,7 +60,7 @@ class BitcoinRPC(object):
         finally:
               defer.returnValue(self.has_submitblock)
 
-    
+
     @defer.inlineCallbacks
     def submitblock(self, block_hex, hash_hex, scrypt_hex):
   #try 5 times? 500 Internal Server Error could mean random error or that TX messages setting is wrong
@@ -125,7 +125,7 @@ class BitcoinRPC(object):
     def getinfo(self):
          resp = (yield self._call('getinfo', []))
          defer.returnValue(json.loads(resp)['result'])
-    
+
     @defer.inlineCallbacks
     def getblocktemplate(self):
         try:
@@ -138,16 +138,22 @@ class BitcoinRPC(object):
                 defer.returnValue(json.loads(resp)['result'])
             else:
                 raise
-                                                  
+
     @defer.inlineCallbacks
     def prevhash(self):
-        resp = (yield self._call('getwork', []))
         try:
-            defer.returnValue(json.loads(resp)['result']['data'][8:72])
+            resp = (yield self._call('getbestblockhash', []))
+            defer.returnValue(json.loads(resp)['result'])
+            # if internal server error try getblocktemplate without empty {} # ppcoin
         except Exception as e:
-            log.exception("Cannot decode prevhash %s" % str(e))
-            raise
-        
+            if (str(e) == "500 Internal Server Error"):
+                resp = (yield self._call('getwork', []))
+                defer.returnValue(util.reverse_hash(json.loads(resp)['result']['data'][8:72]))
+            else:
+                log.exception("Cannot decode prevhash %s" % str(e))
+                raise
+
+
     @defer.inlineCallbacks
     def validateaddress(self, address):
         resp = (yield self._call('validateaddress', [address,]))
