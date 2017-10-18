@@ -130,11 +130,13 @@ class BitcoinRPC(object):
     def getblocktemplate(self):
         try:
             resp = (yield self._call('getblocktemplate', [{}]))
+            # resp = (yield self._call('getblocktemplate', [{'rules':['segwit']}]))
             defer.returnValue(json.loads(resp)['result'])
         # if internal server error try getblocktemplate without empty {} # ppcoin
         except Exception as e:
             if (str(e) == "500 Internal Server Error"):
                 resp = (yield self._call('getblocktemplate', []))
+                # resp = (yield self._call('getblocktemplate', [{'rules':['segwit']}]))
                 defer.returnValue(json.loads(resp)['result'])
             else:
                 raise
