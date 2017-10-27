@@ -10,7 +10,7 @@ import time
 import sys
 import random
 import cStringIO
-from Crypto.Hash import SHA256
+from Crypto.Hash import SHA256, SHA512
 
 from twisted.internet.protocol import Protocol
 from util import *
@@ -211,7 +211,7 @@ class CTransaction(object):
             r += ser_string(self.strTxComment)
         return r
  
-    def calc_sha256(self):
+    def calc_sha256(self): # not change
         if self.sha256 is None:
             self.sha256 = uint256_from_str(SHA256.new(SHA256.new(self.serialize()).digest()).digest())
         return self.sha256
@@ -328,7 +328,8 @@ class CBlock(object):
                r.append(struct.pack("<I", self.nTime))
                r.append(struct.pack("<I", self.nBits))
                r.append(struct.pack("<I", self.nNonce))
-               self.sha256 = uint256_from_str(SHA256.new(SHA256.new(''.join(r)).digest()).digest())
+               self.sha256 = uint256_from_str(SHA256.new(SHA512.new(''.join(r)).digest()).digest())
+               
            return self.sha256
 
 

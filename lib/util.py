@@ -5,7 +5,7 @@ import StringIO
 import binascii
 import settings
 import bitcoin_rpc
-from hashlib import sha256
+from hashlib import sha256, sha512
 
 def deser_string(f):
     nit = struct.unpack("<B", f.read(1))[0]
@@ -164,6 +164,9 @@ def reverse_hash(h):
         raise Exception('hash must have 64 hexa chars')
     
     return ''.join([ h[56-i:64-i] for i in range(0, 64, 8) ])
+
+def sha512d(b): #sha256-512
+    return sha256(sha512(b).digest()).digest()
 
 def doublesha(b):
     return sha256(sha256(b).digest()).digest()
